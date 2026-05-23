@@ -11,16 +11,20 @@ const KEYWORDS = {
   settlement: ["一键结算", "最少转账笔数", "谁转给谁", "债务清零", "手动标记已转账"]
 };
 
-const STORE_KEY = "trip-split-h5-store-v3";
+const LEGACY_STORE_KEY = "trip-split-h5-store-v3";
+const ROOM_REGISTRY_KEY = "trip-split-room-registry-v1";
+const CURRENT_ROOM_KEY = "trip-split-current-room-v1";
+const DRAFT_KEY = "trip-split-room-draft-v1";
+
 const CATEGORY_COLORS = {
-  交通: "#ff7a52",
-  住宿: "#5b8dff",
-  餐饮: "#ff9a31",
-  门票: "#33c979",
-  购物: "#ffc531",
-  娱乐: "#aa62ff",
-  通讯: "#27c2b1",
-  其他: "#98a0ad"
+  "交通": "#ff7a52",
+  "住宿": "#5b8dff",
+  "餐饮": "#ff9a31",
+  "门票": "#33c979",
+  "购物": "#ffc531",
+  "娱乐": "#aa62ff",
+  "通讯": "#27c2b1",
+  "其他": "#98a0ad"
 };
 
 const els = {
@@ -42,6 +46,10 @@ const els = {
   invitePreviewText: document.getElementById("invitePreviewText"),
   copyInviteBtn: document.getElementById("copyInviteBtn"),
   nativeShareBtn: document.getElementById("nativeShareBtn"),
+  joinRoomCode: document.getElementById("joinRoomCode"),
+  joinNickname: document.getElementById("joinNickname"),
+  joinRoomBtn: document.getElementById("joinRoomBtn"),
+  joinRoomStatus: document.getElementById("joinRoomStatus"),
   categoryGrid: document.getElementById("categoryGrid"),
   billAmount: document.getElementById("billAmount"),
   billNote: document.getElementById("billNote"),
@@ -83,7 +91,7 @@ const uiState = {
   editingBillId: ""
 };
 
-function defaultState() {
+function defaultRoomState() {
   const today = new Date();
   const end = new Date(today);
   end.setDate(end.getDate() + 4);
@@ -102,42 +110,164 @@ function defaultState() {
   };
 }
 
-function readState() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    return {
-      trip: { ...defaultState().trip, ...(parsed.trip || {}) },
-      members: Array.isArray(parsed.members) ? parsed.members : [],
-      bills: Array.isArray(parsed.bills) ? parsed.bills : [],
-      settledTransfers: parsed.settledTransfers || {}
-    };
-  } catch {
-    return defaultState();
-  }
+function clone(data) {
+  return JSON.parse(JSON.stringify(data));
 }
 
-function writeState(nextState) {
+function readJson(key, fallback) {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(nextState));
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
   } catch (error) {
-    console.warn("Local storage unavailable, using in-memory state only.", error);
+    console.warn("Read storage failed:", key, error);
+    return fallback;
   }
 }
 
-let store = readState();
+function writeJson(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn("Write storage failed:", key, error);
+  }
+}
+
+function readRegistry() {
+  return readJson(ROOM_REGISTRY_KEY, {});
+}
+
+function writeRegistry(registry) {
+  writeJson(ROOM_REGISTRY_KEY, registry);
+}
+
+function getCurrentRoomCode() {
+  try {
+    return localStorage.getItem(CURRENT_ROOM_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function setCurrentRoomCode(roomCode) {
+  try {
+    if (roomCode) {
+      localStorage.setItem(CURRENT_ROOM_KEY, roomCode);
+    } else {
+      localStorage.removeItem(CURRENT_ROOM_KEY);
+    }
+  } catch (error) {
+    console.warn("Set current room failed:", error);
+  }
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch (error) {
+    console.warn("Clear draft failed:", error);
+  }
+}
+
+function randomRoomCode() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function ensureUniqueRoomCode(registry) {
+  let roomCode = randomRoomCode();
+  while (registry[roomCode]) {
+    roomCode = randomRoomCode();
+  }
+  return roomCode;
+}
+
+function migrateLegacyIfNeeded() {
+  const registry = readRegistry();
+  const currentRoomCode = getCurrentRoomCode();
+  if (currentRoomCode && registry[currentRoomCode]) return;
+
+  const legacy = readJson(LEGACY_STORE_KEY, null);
+  if (!legacy || !legacy.trip) return;
+
+  const hasUsefulData = legacy.trip.name || (legacy.members && legacy.members.length) || (legacy.bills && legacy.bills.length);
+  if (!hasUsefulData) return;
+
+  const roomCode = legacy.trip.roomCode || ensureUniqueRoomCode(registry);
+  const migrated = {
+    ...defaultRoomState(),
+    ...legacy,
+    trip: {
+      ...defaultRoomState().trip,
+      ...(legacy.trip || {}),
+      roomCode
+    }
+  };
+  registry[roomCode] = migrated;
+  writeRegistry(registry);
+  setCurrentRoomCode(roomCode);
+}
+
+function loadStore() {
+  migrateLegacyIfNeeded();
+  const registry = readRegistry();
+  const currentRoomCode = getCurrentRoomCode();
+  if (currentRoomCode && registry[currentRoomCode]) {
+    return clone(registry[currentRoomCode]);
+  }
+
+  const draft = readJson(DRAFT_KEY, null);
+  if (draft && draft.trip) {
+    return {
+      ...defaultRoomState(),
+      ...draft,
+      trip: {
+        ...defaultRoomState().trip,
+        ...(draft.trip || {})
+      }
+    };
+  }
+
+  return defaultRoomState();
+}
+
+let store = loadStore();
+
+function persistStore() {
+  if (store.trip.roomCode) {
+    const registry = readRegistry();
+    registry[store.trip.roomCode] = clone(store);
+    writeRegistry(registry);
+    setCurrentRoomCode(store.trip.roomCode);
+    clearDraft();
+  } else {
+    writeJson(DRAFT_KEY, store);
+  }
+}
 
 function page() {
   return document.body.dataset.page || "";
 }
 
-function symbol() {
+function moneySymbol() {
   return { CNY: "¥", USD: "$", HKD: "HK$" }[store.trip.currency] || "¥";
 }
 
 function formatMoney(value) {
-  return `${symbol()} ${Number(value || 0).toFixed(2)}`;
+  return `${moneySymbol()} ${Number(value || 0).toFixed(2)}`;
+}
+
+function tripReady() {
+  return Boolean(store.trip.name && store.members.length && store.trip.roomCode);
+}
+
+function formatTripMeta() {
+  if (!store.trip.name) return "先去创建旅行并记一笔";
+  const start = store.trip.start || "--";
+  const end = store.trip.end || "--";
+  const days = store.trip.start && store.trip.end
+    ? Math.max(1, Math.round((new Date(store.trip.end) - new Date(store.trip.start)) / 86400000) + 1)
+    : "--";
+  return `${start} - ${end} · 共 ${days} 天`;
 }
 
 function renderTags() {
@@ -149,7 +279,9 @@ function renderTags() {
 
 function injectSchema() {
   const allKeywords = Array.from(new Set(Object.values(KEYWORDS).flat()));
-  if (els.metaKeywords) els.metaKeywords.content = allKeywords.join(",");
+  if (els.metaKeywords) {
+    els.metaKeywords.content = allKeywords.join(",");
+  }
   if (!els.structuredData) return;
   els.structuredData.textContent = JSON.stringify([
     {
@@ -164,28 +296,10 @@ function injectSchema() {
   ]);
 }
 
-function randomRoomCode() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-
-function tripReady() {
-  return Boolean(store.trip.name && store.members.length);
-}
-
-function formatTripMeta() {
-  if (!store.trip.name) return "先去创建旅行并记一笔";
-  const start = store.trip.start || "--";
-  const end = store.trip.end || "--";
-  const days = store.trip.start && store.trip.end
-    ? Math.max(1, Math.round((new Date(store.trip.end) - new Date(store.trip.start)) / 86400000) + 1)
-    : "--";
-  return `${start} - ${end} · 共 ${days} 天`;
-}
-
 function buildInviteText() {
   const current = new URL(window.location.href);
   const baseUrl = `${current.origin}${current.pathname.replace(/[^/]*$/, "index.html")}`;
-  const shareUrl = `${baseUrl}?trip=${encodeURIComponent(store.trip.name || "旅行分账")}&room=${encodeURIComponent(store.trip.roomCode || "")}`;
+  const shareUrl = `${baseUrl}?room=${encodeURIComponent(store.trip.roomCode || "")}`;
   const members = store.members.length ? `当前成员：${store.members.join("、")}。` : "";
   return {
     shareUrl,
@@ -213,6 +327,7 @@ function renderMemberList() {
   if (!els.memberList) return;
   els.memberList.innerHTML = "";
   els.memberList.classList.toggle("empty", store.members.length === 0);
+
   if (!store.members.length) {
     els.memberList.innerHTML = `<p class="empty-text">还没有成员，先输入昵称再添加</p>`;
   } else {
@@ -223,14 +338,19 @@ function renderMemberList() {
       els.memberList.appendChild(chip);
     });
   }
+
   if (els.memberCountLabel) {
     els.memberCountLabel.textContent = `旅行成员（${store.members.length}/20）`;
   }
 }
 
 function updateShareView(message) {
-  if (els.roomCodeText) els.roomCodeText.textContent = store.trip.roomCode || "------";
-  if (els.shareLinkText) els.shareLinkText.textContent = message;
+  if (els.roomCodeText) {
+    els.roomCodeText.textContent = store.trip.roomCode || "------";
+  }
+  if (els.shareLinkText) {
+    els.shareLinkText.textContent = message;
+  }
   if (els.invitePreviewText) {
     els.invitePreviewText.textContent = tripReady()
       ? buildInviteText().text
@@ -245,7 +365,15 @@ function hydrateCreatePage() {
   els.tripEnd.value = store.trip.end;
   els.currencySelect.value = store.trip.currency;
   renderMemberList();
-  updateShareView("创建后可分享");
+  updateShareView(store.trip.roomCode ? `当前房间：${store.trip.roomCode}` : "创建后可分享");
+
+  const roomFromUrl = new URLSearchParams(window.location.search).get("room");
+  if (roomFromUrl && els.joinRoomCode) {
+    els.joinRoomCode.value = roomFromUrl.toUpperCase();
+    if (els.joinRoomStatus) {
+      els.joinRoomStatus.textContent = "已从链接带入房间码，输入昵称后可尝试进入。";
+    }
+  }
 }
 
 function bindCreatePage() {
@@ -255,10 +383,10 @@ function bindCreatePage() {
     const name = (els.memberInput?.value || "").trim().slice(0, 6);
     if (!name || store.members.length >= 20 || store.members.includes(name)) return;
     store.members.push(name);
-    writeState(store);
+    persistStore();
     els.memberInput.value = "";
     renderMemberList();
-    updateShareView("成员已更新，创建后可分享");
+    updateShareView(store.trip.roomCode ? "成员已更新，当前房间已同步" : "成员已更新，创建后可分享");
   };
 
   els.addMemberBtn?.addEventListener("click", addMember);
@@ -273,6 +401,8 @@ function bindCreatePage() {
     const button = event.target.closest("[data-remove-member]");
     if (!button) return;
     const member = button.dataset.removeMember;
+    if (!member) return;
+
     store.members = store.members.filter((item) => item !== member);
     store.bills = store.bills
       .map((bill) => ({
@@ -281,73 +411,102 @@ function bindCreatePage() {
         shares: Object.fromEntries(Object.entries(bill.shares || {}).filter(([key]) => key !== member))
       }))
       .filter((bill) => bill.paidBy !== member && bill.participants.length);
-    writeState(store);
+
+    persistStore();
     renderMemberList();
     updateShareView("成员已删除，相关账单已同步更新");
   });
 
   els.tripName.addEventListener("input", () => {
     store.trip.name = els.tripName.value.trim();
-    writeState(store);
-    updateShareView("行程名称已更新，创建后可分享");
+    persistStore();
+    updateShareView(store.trip.roomCode ? "行程名称已更新，当前房间已同步" : "行程名称已更新，创建后可分享");
   });
 
   els.tripStart?.addEventListener("change", () => {
     store.trip.start = els.tripStart.value;
-    writeState(store);
+    if (store.trip.end < store.trip.start) {
+      store.trip.end = store.trip.start;
+      els.tripEnd.value = store.trip.start;
+    }
+    persistStore();
   });
 
   els.tripEnd?.addEventListener("change", () => {
     store.trip.end = els.tripEnd.value;
-    writeState(store);
+    if (store.trip.end < store.trip.start) {
+      store.trip.end = store.trip.start;
+      els.tripEnd.value = store.trip.start;
+    }
+    persistStore();
   });
 
   els.currencySelect?.addEventListener("change", () => {
     store.trip.currency = els.currencySelect.value;
-    writeState(store);
+    persistStore();
   });
 
   els.createTripBtn?.addEventListener("click", () => {
-    store.trip.name = els.tripName.value.trim();
+    const tripName = els.tripName.value.trim();
+    if (!tripName) {
+      updateShareView("先填写旅行名称");
+      return;
+    }
+    if (!store.members.length) {
+      updateShareView("至少先添加 1 个成员");
+      return;
+    }
+
+    const registry = readRegistry();
+    store.trip.name = tripName;
     store.trip.start = els.tripStart.value;
     store.trip.end = els.tripEnd.value;
-    if (store.trip.end < store.trip.start) {
-      els.tripEnd.value = store.trip.start;
-      store.trip.end = store.trip.start;
-    }
     store.trip.currency = els.currencySelect.value;
-    store.trip.roomCode = randomRoomCode();
+    store.trip.roomCode = ensureUniqueRoomCode(registry);
     store.trip.createdAt = new Date().toISOString();
-    writeState(store);
-    updateShareView(`${store.trip.name || "旅行"} 已创建，可复制分享`);
+    persistStore();
+    updateShareView(`${store.trip.name} 已创建，房间码 ${store.trip.roomCode}`);
   });
 
   els.resetTripBtn?.addEventListener("click", () => {
-    if (!window.confirm("这会清空当前旅行、成员和账单，确定继续吗？")) return;
-    store = defaultState();
-    writeState(store);
+    if (!window.confirm("这会清空当前房间、草稿和账单，确定继续吗？")) return;
+
+    const currentRoomCode = store.trip.roomCode;
+    if (currentRoomCode) {
+      const registry = readRegistry();
+      delete registry[currentRoomCode];
+      writeRegistry(registry);
+    }
+    setCurrentRoomCode("");
+    clearDraft();
+    store = defaultRoomState();
     hydrateCreatePage();
     updateShareView("当前旅行已重置");
   });
 
   els.copyInviteBtn?.addEventListener("click", async () => {
     if (!tripReady()) {
-      updateShareView("先填旅行名称并添加成员");
+      updateShareView("先创建旅行房间，再复制邀请");
       return;
     }
-    await copyText(buildInviteText().text);
-    updateShareView(window.location.protocol === "file:" ? "已复制邀请内容；本地链接仅适合预览，正式分享需要上线地址。" : "邀请内容已复制，可直接发给朋友");
+    const payload = buildInviteText();
+    await copyText(payload.text);
+    updateShareView(window.location.protocol === "file:" ? "已复制邀请内容；本地 file 页面别人无法直接打开，正式分享需要上线地址。" : "邀请内容已复制，可直接发给朋友");
   });
 
   els.nativeShareBtn?.addEventListener("click", async () => {
     if (!tripReady()) {
-      updateShareView("先填旅行名称并添加成员");
+      updateShareView("先创建旅行房间，再分享");
       return;
     }
     const payload = buildInviteText();
     if (navigator.share) {
       try {
-        await navigator.share({ title: APP_INFO.name, text: payload.text, url: payload.shareUrl });
+        await navigator.share({
+          title: APP_INFO.name,
+          text: payload.text,
+          url: payload.shareUrl
+        });
         updateShareView("已调起系统分享");
         return;
       } catch (error) {
@@ -359,6 +518,48 @@ function bindCreatePage() {
     }
     await copyText(payload.text);
     updateShareView("当前环境不支持系统分享，已自动复制邀请内容");
+  });
+
+  const joinRoom = () => {
+    const roomCode = (els.joinRoomCode?.value || "").trim().toUpperCase();
+    const nickname = (els.joinNickname?.value || "").trim().slice(0, 6);
+    if (!roomCode) {
+      if (els.joinRoomStatus) els.joinRoomStatus.textContent = "先输入房间码";
+      return;
+    }
+
+    const registry = readRegistry();
+    const room = registry[roomCode];
+    if (!room) {
+      if (els.joinRoomStatus) {
+        els.joinRoomStatus.textContent = "当前浏览器里找不到这个房间码。若要让别人跨设备进入，需要上线或后端同步。";
+      }
+      return;
+    }
+
+    store = clone(room);
+    if (nickname && !store.members.includes(nickname) && store.members.length < 20) {
+      store.members.push(nickname);
+    }
+    persistStore();
+    if (els.joinRoomStatus) {
+      els.joinRoomStatus.textContent = `已进入房间 ${roomCode}，正在跳转到记一笔页面`;
+    }
+    window.location.href = "./add-bill.html";
+  };
+
+  els.joinRoomBtn?.addEventListener("click", joinRoom);
+  els.joinNickname?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      joinRoom();
+    }
+  });
+  els.joinRoomCode?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      joinRoom();
+    }
   });
 }
 
@@ -510,15 +711,17 @@ function bindBillPage() {
   });
 
   els.saveBillBtn?.addEventListener("click", () => {
-    if (!tripReady()) {
-      els.billStatusText.textContent = "先去创建旅行并添加成员，再来记账。";
+    if (!store.trip.roomCode) {
+      els.billStatusText.textContent = "先创建房间或进入一个房间，再来记账。";
       return;
     }
+
     const amount = Number(els.billAmount.value || 0);
     if (!(amount > 0)) {
       els.billStatusText.textContent = "请先输入正确金额。";
       return;
     }
+
     const participants = [...uiState.selectedParticipants];
     if (!participants.length) {
       els.billStatusText.textContent = "至少要选一个参与人。";
@@ -556,7 +759,8 @@ function bindBillPage() {
     } else {
       store.bills.unshift(bill);
     }
-    writeState(store);
+
+    persistStore();
     const edited = Boolean(uiState.editingBillId);
     clearBillForm(false);
     els.billStatusText.textContent = edited
@@ -573,7 +777,7 @@ function computeStats() {
   expenseBills.forEach((bill) => {
     categoryTotals[bill.category] = (categoryTotals[bill.category] || 0) + Number(bill.amount || 0);
   });
-  return { totalExpense, avgExpense, categoryTotals, expenseBills };
+  return { totalExpense, avgExpense, categoryTotals };
 }
 
 function computeBalances() {
@@ -669,6 +873,7 @@ function renderDonut(categoryTotals, totalExpense) {
     els.categoryLegend.innerHTML = `<p class="empty-text">记账后这里会显示分类占比。</p>`;
     return;
   }
+
   let cursor = 0;
   const slices = entries.map(([name, amount]) => {
     const percent = (amount / totalExpense) * 100;
@@ -678,10 +883,13 @@ function renderDonut(categoryTotals, totalExpense) {
   });
   els.donutChart.style.background = `conic-gradient(${slices.join(", ")})`;
   els.donutChart.innerHTML = `<span>${formatMoney(totalExpense)}<br>总支出</span>`;
-  els.categoryLegend.innerHTML = entries.sort((a, b) => b[1] - a[1]).map(([name, amount]) => {
-    const percent = Math.round((amount / totalExpense) * 100);
-    return `<div class="legend-item"><div class="legend-left"><span class="legend-dot" style="background:${CATEGORY_COLORS[name] || "#ccc"}"></span><span>${name}</span></div><strong>${formatMoney(amount)}</strong><span>${percent}%</span></div>`;
-  }).join("");
+  els.categoryLegend.innerHTML = entries
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, amount]) => {
+      const percent = Math.round((amount / totalExpense) * 100);
+      return `<div class="legend-item"><div class="legend-left"><span class="legend-dot" style="background:${CATEGORY_COLORS[name] || "#ccc"}"></span><span>${name}</span></div><strong>${formatMoney(amount)}</strong><span>${percent}%</span></div>`;
+    })
+    .join("");
 }
 
 function renderExpenseList(bills) {
@@ -691,20 +899,24 @@ function renderExpenseList(bills) {
     els.expenseList.innerHTML = `<p class="empty-text">还没有账单，先去记一笔。</p>`;
     return;
   }
+
   els.expenseList.classList.remove("empty-stack");
-  els.expenseList.innerHTML = bills.slice(0, 8).map((bill) => `
-    <div class="list-item">
-      <div class="item-meta">
-        <strong>${bill.type === "income" ? "收入" : "支出"} · ${bill.category}${bill.note ? ` · ${bill.note}` : ""}</strong>
-        <p>${bill.paidBy} 支付 · ${bill.participants.length} 人参与</p>
+  els.expenseList.innerHTML = bills
+    .slice(0, 8)
+    .map((bill) => `
+      <div class="list-item">
+        <div class="item-meta">
+          <strong>${bill.type === "income" ? "收入" : "支出"} · ${bill.category}${bill.note ? ` · ${bill.note}` : ""}</strong>
+          <p>${bill.paidBy} 支付 · ${bill.participants.length} 人参与</p>
+        </div>
+        <div class="item-actions">
+          <strong>${formatMoney(bill.amount)}</strong>
+          <button type="button" data-edit-bill="${bill.id}">编辑</button>
+          <button type="button" data-delete-bill="${bill.id}">删除</button>
+        </div>
       </div>
-      <div class="item-actions">
-        <strong>${formatMoney(bill.amount)}</strong>
-        <button type="button" data-edit-bill="${bill.id}">编辑</button>
-        <button type="button" data-delete-bill="${bill.id}">删除</button>
-      </div>
-    </div>
-  `).join("");
+    `)
+    .join("");
 }
 
 function renderSettlePreview(balances) {
@@ -715,12 +927,16 @@ function renderSettlePreview(balances) {
     els.settlePreview.innerHTML = `<p class="empty-text">先记账后才能看到谁该收、谁该付。</p>`;
     return;
   }
+
   els.settlePreview.classList.remove("empty-stack");
-  els.settlePreview.innerHTML = entries.sort((a, b) => b[1] - a[1]).map(([member, value]) => {
-    const label = value >= 0 ? "应收" : "应付";
-    const cls = value >= 0 ? "positive" : "negative";
-    return `<div class="preview-line"><span>${member}</span><strong class="${cls}">${label} ${formatMoney(Math.abs(value))}</strong></div>`;
-  }).join("");
+  els.settlePreview.innerHTML = entries
+    .sort((a, b) => b[1] - a[1])
+    .map(([member, value]) => {
+      const label = value >= 0 ? "应收" : "应付";
+      const cls = value >= 0 ? "positive" : "negative";
+      return `<div class="preview-line"><span>${member}</span><strong class="${cls}">${label} ${formatMoney(Math.abs(value))}</strong></div>`;
+    })
+    .join("");
 }
 
 function bindOverviewPage() {
@@ -730,11 +946,12 @@ function bindOverviewPage() {
       window.location.href = `./add-bill.html?edit=${encodeURIComponent(edit.dataset.editBill)}`;
       return;
     }
+
     const del = event.target.closest("[data-delete-bill]");
     if (!del) return;
     if (!window.confirm("确定删除这笔账单吗？")) return;
     store.bills = store.bills.filter((bill) => bill.id !== del.dataset.deleteBill);
-    writeState(store);
+    persistStore();
     hydrateOverviewPage();
   });
 }
@@ -772,6 +989,7 @@ function hydrateSettlementPage() {
       </div>
     `).join("");
   }
+
   updateSettlementProgress(doneCount, transfers.length);
 }
 
@@ -789,7 +1007,7 @@ function bindSettlementPage() {
     const key = item?.dataset.transferKey;
     if (!key) return;
     store.settledTransfers[key] = !store.settledTransfers[key];
-    writeState(store);
+    persistStore();
     hydrateSettlementPage();
   });
 
@@ -815,6 +1033,7 @@ function init() {
   renderTags();
   injectSchema();
   bindToggleGroups();
+
   if (page() === "create") {
     hydrateCreatePage();
     bindCreatePage();

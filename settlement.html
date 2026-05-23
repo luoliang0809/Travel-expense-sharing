@@ -4,37 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>一键结算 | 旅行分账</title>
-  <meta name="description" content="自动计算最简转账方案，查看结算结果，手动标记已转账，减少多人旅行对账压力。">
-  <meta id="metaKeywords" name="keywords" content="一键结算,最少转账笔数,谁转给谁,债务清零,手动标记已转账">
+  <meta name="description" content="进入旅行后，直接查看最简转账方案，尽量减少成员之间的交易次数。">
+  <meta id="metaKeywords" name="keywords" content="一键结算,最简转账方案,谁转给谁">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body data-page="settlement">
-  <main class="mobile-page">
-    <section class="phone-frame">
+  <main class="app-shell">
+    <section class="phone-page settlement-theme">
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-icons"><span></span><span></span><span></span></div>
+      </div>
+
       <header class="page-header">
-        <a class="mini-link" href="./overview.html">返回总览</a>
-        <div class="brand-badge coral-badge">04 一键结算</div>
+        <button class="nav-icon" type="button" aria-label="返回">‹</button>
+        <h1>一键结算</h1>
+        <button class="nav-icon more" type="button" aria-label="更多">•••</button>
       </header>
 
-      <section class="card celebrate-card">
-        <div class="celebrate-copy">
-          <span class="hero-kicker">轻松AA，友情长存</span>
-          <h1>结算完成</h1>
+      <section class="settlement-hero">
+        <div class="confetti-layer"></div>
+        <div class="settlement-copy">
+          <h2>结算完成 🎉</h2>
           <p id="settlementSummaryText">先去创建旅行并记账，系统才能自动算出谁转给谁。</p>
         </div>
-        <img class="celebrate-image" src="./assets/settlement-people.png" alt="四位朋友庆祝旅行结算">
+        <img class="celebrate-image" src="./settlement-people.png" alt="四位朋友庆祝旅行结算">
       </section>
 
-      <section class="card receive-card">
-        <span>本页结果</span>
-        <strong id="settlementHeadlineAmount">¥ 0.00</strong>
-        <p id="settlementHeadlineNote">暂时还没有可结算的金额。</p>
+      <section class="money-card-grid">
+        <article class="money-card income">
+          <span>你将收到</span>
+          <strong id="settlementHeadlineAmount">¥ 0.00</strong>
+        </article>
+        <article class="money-card expense">
+          <span>结果说明</span>
+          <strong id="settlementHeadlineNote">暂时无结果</strong>
+        </article>
       </section>
 
-      <section class="card">
-        <div class="section-head">
-          <h2>转账进度</h2>
-          <span id="settlementProgressText">已完成 0 / 0</span>
+      <section class="sheet-card">
+        <div class="block-head-line">
+          <div class="list-title">最简转账方案</div>
+          <span id="settlementProgressText" class="mini-status">已完成 0 / 0</span>
         </div>
         <div class="progress-track"><span id="settlementProgressBar"></span></div>
         <div id="settlementList" class="list-stack empty-stack">
@@ -42,27 +53,24 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="section-head">
-          <h2>群里可直接发</h2>
-        </div>
-        <p id="groupSummaryText" class="summary-text">旅行账目还没生成，等记完账后这里会自动给出结算摘要文案。</p>
-        <div class="action-row">
-          <button id="copySettlementSummaryBtn" class="ghost-btn" type="button">复制摘要</button>
-          <button id="shareSettlementBtn" class="primary-btn" type="button">系统分享</button>
-        </div>
+      <section class="sheet-card">
+        <div class="success-strip">全部结清后，旅行账单就完美收尾啦！</div>
+        <p id="groupSummaryText" class="tip-text">旅行账目还没生成，等记完账后这里会自动给出结算摘要文案。</p>
       </section>
 
-      <section class="keyword-section">
-        <h3>结算阶段常搜</h3>
+      <div class="action-row">
+        <button id="copySettlementSummaryBtn" class="secondary-cta" type="button">分享账单</button>
+        <button id="shareSettlementBtn" class="primary-cta yellow-cta" type="button">完成</button>
+      </div>
+
+      <div class="keyword-area">
         <div class="keyword-tags" data-keywords="settlement"></div>
-      </section>
+      </div>
 
-      <nav class="bottom-nav" aria-label="页面导航">
-        <a href="./index.html">创建旅行</a>
-        <a href="./add-bill.html">记一笔</a>
-        <a href="./overview.html">账目总览</a>
-        <a class="active" href="./settlement.html">一键结算</a>
+      <nav class="app-tabbar trip-tabbar" aria-label="页面导航">
+        <a href="./add-bill.html"><span class="tab-ico">✎</span><span>记一笔</span></a>
+        <a href="./overview.html"><span class="tab-ico">◔</span><span>账目总览</span></a>
+        <a class="active" href="./settlement.html"><span class="tab-ico">✓</span><span>一键结算</span></a>
       </nav>
     </section>
   </main>

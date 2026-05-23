@@ -4,116 +4,174 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>创建旅行 | 旅行分账</title>
-  <meta name="description" content="创建旅行账本，添加成员，生成房间码和邀请分享。适合朋友出游、闺蜜旅行、多人AA记账。">
-  <meta id="metaKeywords" name="keywords" content="创建旅行,旅行账本,房间码加入,微信分享加入,免注册,点开即用">
+  <meta name="description" content="先创建本次旅行，再把旅行密码发给同伴。输入密码后，就能直接进入这次旅行的记账、总览和结算页面。">
+  <meta id="metaKeywords" name="keywords" content="创建旅行,进入旅行,旅行密码,多人旅行记账,分账">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body data-page="create">
-  <main class="mobile-page">
-    <section class="phone-frame">
+  <main class="app-shell">
+    <section class="phone-page">
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-icons"><span></span><span></span><span></span></div>
+      </div>
+
       <header class="page-header">
-        <div class="brand-badge">旅行分账</div>
-        <a class="mini-link" href="./overview.html">看看账单</a>
+        <button class="nav-icon" type="button" aria-label="返回">‹</button>
+        <h1>旅行分账</h1>
+        <button class="nav-icon more" type="button" aria-label="更多">•••</button>
       </header>
 
-      <section class="hero-banner hero-create">
-        <img src="./assets/create-banner.png" alt="海边旅行插画头图">
-        <div class="hero-copy">
-          <span class="hero-kicker">01 创建旅行</span>
-          <h1>去哪里玩呀？</h1>
-          <p>邀请好友，一起记账不糊涂</p>
+      <nav class="home-switch-nav" aria-label="首页导航">
+        <a class="active" href="#create-trip-panel">创建旅行</a>
+        <a href="#join-trip-panel">进入旅行</a>
+      </nav>
+
+      <section id="home-create-view" class="home-panel">
+      <section class="hero-banner">
+        <img src="./create-banner.png" alt="旅行头图">
+        <div class="hero-banner-copy">
+          <h2>一起去旅行吧！</h2>
+          <p>先创建旅行，再开始记账分账</p>
         </div>
       </section>
 
-      <section class="card form-card">
-        <div class="card-title-row">
-          <div>
-            <h2>创建旅行</h2>
-            <p>先起个名字，再把朋友加进来</p>
-          </div>
-          <span class="pill yellow-pill">免注册</span>
+      <section id="create-trip-panel" class="sheet-card">
+        <div class="block-head-line">
+          <div class="list-title">创建旅行</div>
+          <span class="mini-status">第 1 步</span>
         </div>
 
-        <label class="field">
-          <span>旅行名称</span>
-          <input id="tripName" type="text" maxlength="20" placeholder="比如：厦门鼓浪屿之旅">
+        <label class="line-field">
+          <span class="field-label">旅行名称</span>
+          <input id="tripName" type="text" maxlength="20" placeholder="厦门鼓浪屿之旅 🌴">
+          <span class="field-arrow">›</span>
         </label>
 
-        <div class="field-grid">
-          <label class="field">
-            <span>开始日期</span>
-            <input id="tripStart" type="date">
-          </label>
-          <label class="field">
-            <span>结束日期</span>
-            <input id="tripEnd" type="date">
-          </label>
-        </div>
-
-        <label class="field">
-          <span>默认货币</span>
-          <select id="currencySelect">
-            <option value="CNY">人民币 (CNY)</option>
-            <option value="USD">美元 (USD)</option>
-            <option value="HKD">港币 (HKD)</option>
-          </select>
-        </label>
-
-        <div class="field">
-          <div class="field-head">
-            <span id="memberCountLabel">旅行成员（0/20）</span>
-            <small>刚创建时默认没人</small>
+        <label class="line-field">
+          <span class="field-label">旅行日期</span>
+          <div class="field-main dual-value">
+            <input id="tripStart" type="date" aria-label="开始日期">
+            <span>–</span>
+            <input id="tripEnd" type="date" aria-label="结束日期">
           </div>
-          <div class="member-add-row">
+          <span class="field-tip">共5天</span>
+        </label>
+
+        <div class="line-block">
+          <div class="field-topline">
+            <span class="field-label" id="memberCountLabel">旅行成员（0/20）</span>
+            <small>先加成员，再创建旅行</small>
+          </div>
+          <div class="member-entry">
             <input id="memberNameInput" type="text" maxlength="6" placeholder="输入昵称，比如：阿宁">
-            <button id="addMemberBtn" class="soft-btn" type="button">添加</button>
+            <button id="addMemberBtn" class="tiny-solid-btn" type="button">添加</button>
           </div>
-          <div id="memberList" class="member-list empty">
+          <div id="memberList" class="member-avatar-row empty">
             <p class="empty-text">还没有成员，先输入昵称再添加</p>
           </div>
         </div>
 
-        <button id="createTripBtn" class="primary-btn yellow-btn" type="button">创建旅行</button>
-        <button id="resetTripBtn" class="ghost-btn" type="button">重置当前旅行</button>
-        <p class="tiny-text">免注册，不用登录，微信里点开就能用。</p>
-      </section>
+        <label class="line-field">
+          <span class="field-label">默认货币</span>
+          <select id="currencySelect">
+            <option value="CNY">人民币（CNY）</option>
+            <option value="USD">美元（USD）</option>
+            <option value="HKD">港币（HKD）</option>
+          </select>
+          <span class="field-arrow">›</span>
+        </label>
 
-      <section class="card info-card">
-        <div>
-          <h3>房间码</h3>
-          <strong id="roomCodeText">------</strong>
-          <p id="shareLinkText">创建后可分享</p>
+        <div class="soft-hint">创建后会自动生成一串旅行密码</div>
+
+        <div class="room-card">
+          <div class="room-card-head">
+            <div>
+              <span class="room-label">旅行密码</span>
+              <strong id="roomCodeText" class="room-code">------</strong>
+            </div>
+            <div class="room-actions">
+              <button id="copyInviteBtn" class="tag-btn" type="button">复制</button>
+              <button id="nativeShareBtn" class="tag-btn" type="button">分享</button>
+            </div>
+          </div>
+          <p id="shareLinkText" class="room-state">创建后可分享</p>
+          <p id="invitePreviewText" class="tip-text">先创建旅行，再复制邀请文案或直接系统分享。</p>
         </div>
       </section>
 
-      <section class="card info-card">
-        <div class="invite-block">
-          <div>
-            <h3>邀请分享</h3>
-            <p id="invitePreviewText">先创建旅行，再复制邀请文案或直接系统分享。</p>
-          </div>
-          <div class="action-row">
-            <button id="copyInviteBtn" class="ghost-btn" type="button">复制邀请</button>
-            <button id="nativeShareBtn" class="primary-btn" type="button">系统分享</button>
-          </div>
+      <button id="createTripBtn" class="primary-cta yellow-cta" type="button">创建旅行</button>
+      <button id="resetTripBtn" class="subtle-link-btn" type="button">重置当前旅行</button>
+      </section>
+
+      <section id="join-trip-panel" class="join-card home-panel join-panel-only">
+        <div class="join-card-head">
+          <strong>进入旅行</strong>
+          <p>输入旅行密码和昵称，就能直接打开这次旅行</p>
         </div>
+        <div class="join-grid">
+          <input id="joinRoomCode" type="text" maxlength="8" placeholder="旅行密码">
+          <input id="joinNickname" type="text" maxlength="6" placeholder="你的昵称">
+        </div>
+        <button id="joinRoomBtn" class="secondary-cta" type="button">进入旅行</button>
+        <p id="joinRoomStatus" class="tip-text">进入后会直接打开：记一笔、账目总览和一键结算。</p>
       </section>
 
-      <section class="keyword-section">
-        <h3>适合这些场景</h3>
-        <div class="keyword-tags" data-keywords="create"></div>
-      </section>
-
-      <nav class="bottom-nav" aria-label="页面导航">
-        <a class="active" href="./index.html">创建旅行</a>
-        <a href="./add-bill.html">记一笔</a>
-        <a href="./overview.html">账目总览</a>
-        <a href="./settlement.html">一键结算</a>
+      <nav class="app-tabbar home-tabbar" aria-label="页面导航">
+        <a class="active" href="#create-trip-panel"><span class="tab-ico">＋</span><span>创建旅行</span></a>
+        <a href="#join-trip-panel"><span class="tab-ico">⌁</span><span>进入旅行</span></a>
       </nav>
     </section>
   </main>
 
   <script id="structured-data" type="application/ld+json"></script>
   <script src="./script.js"></script>
+  <script>
+    (function () {
+      const createLink = document.querySelector('.home-switch-nav a[href="#create-trip-panel"]');
+      const joinLink = document.querySelector('.home-switch-nav a[href="#join-trip-panel"]');
+      const createView = document.getElementById('home-create-view');
+      const joinView = document.getElementById('join-trip-panel');
+      const bottomCreate = document.querySelector('.home-tabbar a[href="#create-trip-panel"]');
+      const bottomJoin = document.querySelector('.home-tabbar a[href="#join-trip-panel"]');
+
+      function setActive(mode) {
+        const showJoin = mode === 'join';
+        createView.classList.toggle('hidden-home-panel', showJoin);
+        joinView.classList.toggle('hidden-home-panel', !showJoin);
+        createLink.classList.toggle('active', !showJoin);
+        joinLink.classList.toggle('active', showJoin);
+        bottomCreate.classList.toggle('active', !showJoin);
+        bottomJoin.classList.toggle('active', showJoin);
+      }
+
+      function syncFromHash() {
+        setActive(window.location.hash === '#join-trip-panel' ? 'join' : 'create');
+      }
+
+      createLink.addEventListener('click', function () {
+        window.location.hash = 'create-trip-panel';
+        setActive('create');
+      });
+
+      joinLink.addEventListener('click', function () {
+        window.location.hash = 'join-trip-panel';
+        setActive('join');
+      });
+
+      bottomCreate.addEventListener('click', function () {
+        window.location.hash = 'create-trip-panel';
+        setActive('create');
+      });
+
+      bottomJoin.addEventListener('click', function () {
+        window.location.hash = 'join-trip-panel';
+        setActive('join');
+      });
+
+      window.addEventListener('hashchange', syncFromHash);
+      syncFromHash();
+    })();
+  </script>
 </body>
 </html>
