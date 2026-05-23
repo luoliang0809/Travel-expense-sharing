@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>创建旅行 | 旅行分账</title>
+  <meta name="description" content="创建旅行账本，添加成员，生成房间码和邀请分享。适合朋友出游、闺蜜旅行、多人AA记账。">
+  <meta id="metaKeywords" name="keywords" content="创建旅行,旅行账本,房间码加入,微信分享加入,免注册,点开即用">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="create">
+  <main class="mobile-page">
+    <section class="phone-frame">
+      <header class="page-header">
+        <div class="brand-badge">旅行分账</div>
+        <a class="mini-link" href="./overview.html">看看账单</a>
+      </header>
+
+      <section class="hero-banner hero-create">
+        <img src="./assets/create-banner.png" alt="海边旅行插画头图">
+        <div class="hero-copy">
+          <span class="hero-kicker">01 创建旅行</span>
+          <h1>去哪里玩呀？</h1>
+          <p>邀请好友，一起记账不糊涂</p>
+        </div>
+      </section>
+
+      <section class="card form-card">
+        <div class="card-title-row">
+          <div>
+            <h2>创建旅行</h2>
+            <p>先起个名字，再把朋友加进来</p>
+          </div>
+          <span class="pill yellow-pill">免注册</span>
+        </div>
+
+        <label class="field">
+          <span>旅行名称</span>
+          <input id="tripName" type="text" maxlength="20" placeholder="比如：厦门鼓浪屿之旅">
+        </label>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>开始日期</span>
+            <input id="tripStart" type="date">
+          </label>
+          <label class="field">
+            <span>结束日期</span>
+            <input id="tripEnd" type="date">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>默认货币</span>
+          <select id="currencySelect">
+            <option value="CNY">人民币 (CNY)</option>
+            <option value="USD">美元 (USD)</option>
+            <option value="HKD">港币 (HKD)</option>
+          </select>
+        </label>
+
+        <div class="field">
+          <div class="field-head">
+            <span id="memberCountLabel">旅行成员（0/20）</span>
+            <small>刚创建时默认没人</small>
+          </div>
+          <div class="member-add-row">
+            <input id="memberNameInput" type="text" maxlength="6" placeholder="输入昵称，比如：阿宁">
+            <button id="addMemberBtn" class="soft-btn" type="button">添加</button>
+          </div>
+          <div id="memberList" class="member-list empty">
+            <p class="empty-text">还没有成员，先输入昵称再添加</p>
+          </div>
+        </div>
+
+        <button id="createTripBtn" class="primary-btn yellow-btn" type="button">创建旅行</button>
+        <button id="resetTripBtn" class="ghost-btn" type="button">重置当前旅行</button>
+        <p class="tiny-text">免注册，不用登录，微信里点开就能用。</p>
+      </section>
+
+      <section class="card info-card">
+        <div>
+          <h3>房间码</h3>
+          <strong id="roomCodeText">------</strong>
+          <p id="shareLinkText">创建后可分享</p>
+        </div>
+      </section>
+
+      <section class="card info-card">
+        <div class="invite-block">
+          <div>
+            <h3>邀请分享</h3>
+            <p id="invitePreviewText">先创建旅行，再复制邀请文案或直接系统分享。</p>
+          </div>
+          <div class="action-row">
+            <button id="copyInviteBtn" class="ghost-btn" type="button">复制邀请</button>
+            <button id="nativeShareBtn" class="primary-btn" type="button">系统分享</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="keyword-section">
+        <h3>适合这些场景</h3>
+        <div class="keyword-tags" data-keywords="create"></div>
+      </section>
+
+      <nav class="bottom-nav" aria-label="页面导航">
+        <a class="active" href="./index.html">创建旅行</a>
+        <a href="./add-bill.html">记一笔</a>
+        <a href="./overview.html">账目总览</a>
+        <a href="./settlement.html">一键结算</a>
+      </nav>
+    </section>
+  </main>
+
+  <script id="structured-data" type="application/ld+json"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

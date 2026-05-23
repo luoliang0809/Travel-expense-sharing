@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>账目总览 | 旅行分账</title>
+  <meta name="description" content="查看旅行账目总览，包括总支出、人均消费、分类占比、最新账单和成员结算预览。">
+  <meta id="metaKeywords" name="keywords" content="账目总览,总消费金额,人均消费,分类占比,明细账单列表,谁欠我">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="overview">
+  <main class="mobile-page">
+    <section class="phone-frame">
+      <header class="page-header">
+        <a class="mini-link" href="./add-bill.html">去记一笔</a>
+        <div class="brand-badge blue-badge">03 账目总览</div>
+      </header>
+
+      <section class="hero-banner hero-overview">
+        <img src="./assets/overview-banner.png" alt="旅行海边横幅">
+        <div class="hero-copy overlay">
+          <span class="hero-kicker">旅行中</span>
+          <h1 id="overviewTripName">还没有旅行</h1>
+          <p id="overviewTripMeta">先去创建旅行并记一笔</p>
+        </div>
+      </section>
+
+      <section class="member-strip-card">
+        <div id="overviewMembers" class="member-strip"></div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="card stat-card">
+          <span>总支出</span>
+          <strong id="totalExpense">¥ 0.00</strong>
+          <p id="billCountText">共 0 笔</p>
+        </article>
+        <article class="card stat-card">
+          <span>人均支出</span>
+          <strong id="avgExpense">¥ 0.00</strong>
+          <p>自动统计</p>
+        </article>
+      </section>
+
+      <section class="card chart-card">
+        <div class="donut-wrap">
+          <div id="donutChart" class="donut-chart"><span>还没记账</span></div>
+        </div>
+        <div id="categoryLegend" class="legend-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>最新账单</h2>
+          <a class="mini-link" href="./add-bill.html">继续记</a>
+        </div>
+        <div id="expenseList" class="list-stack empty-stack">
+          <p class="empty-text">还没有账单，先去记一笔。</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>成员结算预览</h2>
+          <a class="mini-link" href="./settlement.html">查看结算</a>
+        </div>
+        <div id="settlePreview" class="list-stack empty-stack">
+          <p class="empty-text">先记账后才能看到谁该收、谁该付。</p>
+        </div>
+      </section>
+
+      <section class="keyword-section">
+        <h3>查看账目时常搜</h3>
+        <div class="keyword-tags" data-keywords="overview"></div>
+      </section>
+
+      <nav class="bottom-nav" aria-label="页面导航">
+        <a href="./index.html">创建旅行</a>
+        <a href="./add-bill.html">记一笔</a>
+        <a class="active" href="./overview.html">账目总览</a>
+        <a href="./settlement.html">一键结算</a>
+      </nav>
+    </section>
+  </main>
+
+  <script id="structured-data" type="application/ld+json"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
